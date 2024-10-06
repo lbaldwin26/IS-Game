@@ -3,6 +3,8 @@ import socket
 import sys
 import logging
 
+from .connection import Connection
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
 
@@ -19,7 +21,12 @@ def main():
     server.bind((host, port))
     server.listen()
 
-    logging.info("Socket listening at %s on port %s" % (host, port))
+    logging.info("Socket listening for new connections at %s on port %s" % (host, port))
+
+    while True:
+        sock, addr = socket.accept()
+        conn = Connection(sock, addr)
+        conn.start()
 
 if __name__ == '__main__':
     main()
