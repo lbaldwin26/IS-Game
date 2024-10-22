@@ -1,12 +1,31 @@
 import socket
-
 import sys
-import logging
 
 from connection import Connection
+from MatchFinder import match_finder_thread
+from debug import logger
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(encoding="utf-8", level=logging.DEBUG)
+from handler import packetHandler
+from packets.QueueMatch import QueueMatch
+from model import players, States
+
+
+def listen_for_connection(socket):
+    sock, addr = socket.accept()
+    conn = Connection(sock, addr)
+    logger.info("New connection established: %s:%s" % addr)
+
+    players[conn.UUID] = {
+        "state": States.IDLE,
+        "connection": conn,
+        "opponent": None,
+        "game_data": {
+            "money": 200,
+            "isTurn": False,
+        },
+    }
+
+    conn.start()
 
 
 def main():
@@ -21,16 +40,15 @@ def main():
     server.bind((host, port))
     server.listen()
 
-    logging.info("Socket listening for new connections at %s on port %s" % (host, port))
+    # Registering packets {{{
+    packetHandler.registerPacket(QueueMatch)
+    # }}}
 
+    match_finder_thread.start()
+
+    logger.info("Socket listening for new connections at %s on port %s" % (host, port))
     while True:
-        # Listen for new connections {{{
-        sock, addr = server.accept()
-        conn = Connection(sock, addr, logger=logging)
-        logging.info("New connection established: %s:%s" % addr)
-        # conn will still refer to the same thing as the one in connections as python passes a reference rather than a copy. No need to fear about starting.
-        conn.start()
-        # }}}
+        listen_for_connection(server)
 
 
 if __name__ == "__main__":

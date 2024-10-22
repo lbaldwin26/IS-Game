@@ -1,4 +1,13 @@
 from collections import deque
+from enum import Enum
 
-# Make shared memory across threads. Related: ISSUE 1
 queue = deque()
+
+players = {}
+
+
+class States(Enum):
+    DISCONNECTED = 1
+    IDLE = 2
+    MATCH_MAKING = 3
+    IN_GAME = 4

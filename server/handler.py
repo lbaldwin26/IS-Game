@@ -4,15 +4,15 @@ from abc import ABC, abstractmethod
 class PacketHeader:
     PACKET_HEADER_SIZE = 1
 
-    def __init__(self, id: int = None):
-        self.id = id
+    def __init__(self, id_: int = None):
+        self.id = id_
 
     def to_bytes(self) -> bytes:
-        return id.to_bytes(self.PACKET_HEADER_SIZE, "big")
+        return self.id.to_bytes(self.PACKET_HEADER_SIZE, "big")
 
     def from_bytes(self, header):
-        id = header
-        self.id = id
+        id_ = header
+        self.id = id_
 
 
 class Packet(ABC):

@@ -1,16 +1,18 @@
-from server.handler import Packet
-from server.model import queue
+from handler import Packet
+from model import queue, players, States
 
 
 class QueueMatch(Packet):
-    def __init__(self, opponent_uuid):
+    def __init__(self, opponent_uuid=None, gets_starting_turn=None):
         self.opponent_uuid = opponent_uuid
+        self.gets_starting_turn = gets_starting_turn
 
     def handle(self, connection):
         """
         In lieu of a direct callback, a reference to the players' connection will be placed inside the match making queue and when matched will receive back a QueueMatch packet initiated by the matchfinder thread.
         """
-        if connection not in queue:
+        if players[connection.UUID]["state"] is States.IDLE:
+            players[connection.UUID]["state"] = States.MATCH_MAKING
             queue.append(connection)
 
     def to_bytes(self) -> bytes:

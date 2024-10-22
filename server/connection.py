@@ -1,26 +1,32 @@
 import threading
 import uuid
+
+from debug import logger
 from handler import PacketHeader, packetHandler
+from model import players, States
 
 
 class Connection(threading.Thread):
-    def __init__(self, socket, address, *, logger):
+    def __init__(self, socket, address):
         threading.Thread.__init__(self)
         self._socket = socket
         self.address = address
         self.isOk = True
-        self.UUID = str(uuid.uuid4())
-        self._logger = logger
+        self.UUID = uuid.uuid4()
 
     def run(self):
         """Entry point for thread initiation"""
         while self.isOk:
             self.read()
+
+        # Notify disconnect
+        players[self.UUID]["state"] = States.DISCONNECTED
+
         self._close_connection()
 
     def _close_connection(self):
-        self._logger.info("Connection closed: %s" % self.UUID)
         self._socket.close()
+        logger.info("connection closed for %s:%s" % self.address)
 
     def send_packet(self, packet):
         """
@@ -32,10 +38,14 @@ class Connection(threading.Thread):
         packetHeader = PacketHeader(packetID)
 
         data = bytearray()
-        data.append(packetHeader.to_bytes())
-        data.append(packet.to_bytes())
+        data.extend(packetHeader.to_bytes())
+        data.extend(packet.to_bytes())
 
-        self._socket.send(data)
+        self._socket.sendall(data)  # Get OS error if sent to a dead socket
+        logger.info(
+            "Packet of id %s was sent to the server from %s:%s"
+            % (packetID, self.address[0], self.address[1])
+        )
 
     def read(self):
         """
@@ -53,12 +63,15 @@ class Connection(threading.Thread):
             self.isOk = False
             return
 
-        # Improve?
+        logger.debug("Received %s" % data)
         header = data[PacketHeader.PACKET_HEADER_SIZE - 1]
         packetHeader = PacketHeader()
         packetHeader.from_bytes(header)
         if packetHeader.id not in packetHandler.id_to_class.keys():
-            self._logger.warning("PacketHeader id not found within registered packets. Dropping read")
+            logger.error(
+                "PacketID %s not found from incoming packet. Reading dropped"
+                % packetHeader.id
+            )
             return
 
         payload = data[PacketHeader.PACKET_HEADER_SIZE :]
