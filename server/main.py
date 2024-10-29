@@ -7,6 +7,9 @@ from debug import logger
 
 from handler import packetHandler
 from packets.QueueMatch import QueueMatch
+from packets.PlayCard import PlayCard
+from packets.RaisePot import RaisePot
+
 from model import players, States
 
 
@@ -42,6 +45,8 @@ def main():
 
     # Registering packets {{{
     packetHandler.registerPacket(QueueMatch)
+    packetHandler.registerPacket(PlayCard)
+    packetHandler.registerPacket(RaisePot)
     # }}}
 
     match_finder_thread.start()

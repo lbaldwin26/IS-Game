@@ -1,5 +1,4 @@
 from handler import Packet
-from model import players
 
 
 class PlayCard(Packet):
@@ -7,8 +6,7 @@ class PlayCard(Packet):
         self.card_id = card_id
 
     def handle(self, connection):
-        if players[connection.UUID].isTurn is True:
-            pass
+        raise NotImplementedError
 
     def to_bytes(self) -> bytes:
         raise NotImplementedError
